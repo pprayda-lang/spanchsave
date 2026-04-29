@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Копилочка Спанч Боба</title>
+  <!-- React + ReactDOM (для работы JSX-подобного кода) -->
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <!-- Babel для JSX в браузере (только для разработки) -->
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none; /* чуть приятнее на телефоне */
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #F5F5F5;
+      min-height: 100vh;
+    }
+    /* контейнер приложения */
+    .app-container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #F5F5F5;
+      padding: 12px 12px 20px;
+    }
+    /* банка */
+    .jar-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 8px;
+      margin-bottom: 12px;
+    }
+    .jar {
+      position: relative;
+      width: 70vw;
+      max-width: 280px;
+      height: calc(70vw * 1.2);
+      max-height: 336px;
+      background: #FDF5E6;
+      border: 4px solid #DEB887;
+      border-radius: 40px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .jar-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(0deg, #FFD700, #FFA500, #FF8C00);
+      transition: height 0.3s ease;
+      z-index: 1;
+    }
+    .jar-coin-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 215, 0, 0.1);
+      border-radius: 36px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .jar-lid {
+      position: absolute;
+      top: -15px;
+      left: -10px;
+      right: -10px;
+      height: 25px;
+      background: #CD853F;
+      border-radius: 15px;
+      border: 2px solid #8B4513;
+      z-index: 3;
+    }
+    .spongebob-img {
+      position: absolute;
+      top: 25%;
+      left: 50%;
+      width: 60%;
+      transform: translateX(-50%);
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .percent-badge {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      z-index: 15;
+    }
+    .percent-badge span {
+      background: rgba(255,255,240,0.95);
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #FF8C00;
+      backdrop-filter: blur(2px);
+    }
+    .jar-label {
+      margin-top: 8px;
+      font-weight: bold;
+      color: #FF8C00;
+      font-size: 14px;
+    }
+    /* карточка с суммой */
+    .stats-card {
+      background: white;
+      border-radius: 24px;
+      padding: 12px 16px;
+      margin: 16px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .total {
+      font-size: 32px;
+      font-weight: 800;
+      color: #FFD700;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .target {
+      font-size: 14px;
+      color: #666;
+      margin: 6px 0 8px;
+    }
+    .progress-bar {
+      background: #E0E0E0;
+      border-radius: 20px;
+      height: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      background: #FFD700;
+      height: 100%;
+      width: 0%;
+      transition: width 0.2s;
+    }
+    /* ряд кнопок */
+    .row-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 12px 16px;
+    }
+    .btn-sort {
+      background: #E0E0E0;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-add {
+      background: #FFD700;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 8px 24px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    /* сетка дней */
+    .days-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px 24px;
+    }
+    .day-card {
+      position: relative;
+      width: calc(20% - 8px);
+      min-width: 55px;
+      aspect-ratio: 1 / 1;
+      background: white;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #ddd;
+      transition: 0.05s linear;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .day-card.paid {
+      background: #FFF3E0;
+      border-color: #FFC107;
+      text-decoration: line-through;
+      color: #B8860B;
+    }
+    .check {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #FFD700;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      width: 16px;
+      height: 16px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* модалка */
+    .modal-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: white;
+      width: 80%;
+      max-width: 320px;
+      border-radius: 32px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .modal-card input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 40px;
+      margin: 8px 0;
+      font-size: 16px;
+      text-align: center;
+    }
+    .modal-btn {
+      background: #FFD700;
+      border: none;
+      padding: 12px;
+      border-radius: 40px;
+      width: 100%;
+      margin: 6px 0;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      color: white;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      margin-top: 8px;
+      color: #888;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .or-text {
+      margin: 8px 0;
+      color: #666;
+    }
+    .loading {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 18px;
+      color: #666;
+    }
+    button {
+      background: none;
+      font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const TOTAL_POSSIBLE = 66795;
+
+    // изображение Спанч Боба - замените на свою ссылку или удалите
+    const SPONGEBOB_URL = "https://cdn-icons-png.flaticon.com/512/2152/2152682.png"; // просто иконка для примера
+
+    function App() {
+      const [days, setDays] = useState([]);
+      const [total, setTotal] = useState(0);
+      const [percent, setPercent] = useState(0);
+      const [loading, setLoading] = useState(true);
+      const [sortType, setSortType] = useState('default');
+      const [modalVisible, setModalVisible] = useState(false);
+      const [inputDay, setInputDay] = useState('');
+      const [inputAmount, setInputAmount] = useState('');
+
+      // инициализация Telegram WebApp
+      useEffect(() => {
+        if (window.Telegram && window.Telegram.WebApp) {
+          const tg = window.Telegram.WebApp;
+          tg.expand();    // растянуть на весь экран
+          tg.ready();     // сигнал, что приложение загружено
+          // можно адаптировать тему (опционально)
+          document.body.style.backgroundColor = tg.themeParams.bg_color || '#F5F5F5';
+        }
+      }, []);
+
+      // загрузка данных
+      useEffect(() => {
+        loadData();
+      }, []);
+
+      const loadData = () => {
+        try {
+          const raw = localStorage.getItem('savings365');
+          if (!raw) {
+            const initial = [];
+            for (let i = 1; i <= 365; i++) {
+              initial.push({ id: i, day: i, isPaid: false, value: i });
+            }
+            setDays(initial);
+            setTotal(0);
+            setPercent(0);
+          } else {
+            const data = JSON.parse(raw);
+            setDays(data);
+            const sum = data.reduce((acc, d) => acc + (d.isPaid ? d.value : 0), 0);
+            setTotal(sum);
+            setPercent((sum / TOTAL_POSSIBLE) * 100);
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const saveData = (newDays) => {
+        localStorage.setItem('savings365', JSON.stringify(newDays));
+        setDays(newDays);
+        const sum = newDays.reduce((acc, d) => acc + (d.isPaid ? d.value : 0), 0);
+        setTotal(sum);
+        setPercent((sum / TOTAL_POSSIBLE) * 100);
+      };
+
+      const markDay = (dayNumber) => {
+        const updated = days.map(day => {
+          if (day.day === dayNumber && !day.isPaid) return { ...day, isPaid: true };
+          return day;
+        });
+        saveData(updated);
+      };
+
+      const unmarkDay = (dayNumber) => {
+        const updated = days.map(day => {
+          if (day.day === dayNumber && day.isPaid) return { ...day, isPaid: false };
+          return day;
+        });
+        saveData(updated);
+      };
+
+      const handlePress = (item) => {
+        if (item.isPaid) {
+          if (window.confirm(`День ${item.day} (${item.value} ₽) уже отмечен. Отменить?`)) {
+            unmarkDay(item.day);
+          }
+        } else {
+          markDay(item.day);
+        }
+      };
+
+      const handleAddByDay = () => {
+        const dayNum = parseInt(inputDay);
+        if (isNaN(dayNum)) return alert('Введите число');
+        if (dayNum >= 1 && dayNum <= 365) {
+          const target = days.find(d => d.day === dayNum);
+          if (target && !target.isPaid) {
+            markDay(dayNum);
+            setInputDay('');
+            setModalVisible(false);
+            alert(`День ${dayNum} отмечен!`);
+          } else {
+            alert('Этот день уже отмечен или не существует');
+          }
+        } else {
+          alert('Введите число от 1 до 365');
+        }
+      };
+
+      const handleAddByAmount = () => {
+        const amount = parseInt(inputAmount);
+        if (isNaN(amount)) return alert('Введите сумму');
+        if (amount >= 1 && amount <= 365) {
+          const idx = days.findIndex(day => !day.isPaid && day.value === amount);
+          if (idx !== -1) {
+            const updated = [...days];
+            updated[idx].isPaid = true;
+            saveData(updated);
+            setInputAmount('');
+            setModalVisible(false);
+            alert(`Отмечен день ${updated[idx].day} на сумму ${amount} ₽`);
+          } else {
+            alert(`Нет свободного дня с суммой ${amount} ₽`);
+          }
+        } else {
+          alert('Сумма должна быть от 1 до 365 рублей');
+        }
+      };
+
+      const handleRandom = () => {
+        const unpaid = days.filter(day => !day.isPaid);
+        if (unpaid.length === 0) {
+          alert('Поздравляем! Вы закрыли все 365 дней! 🎉');
+          setModalVisible(false);
+          return;
+        }
+        const rand = unpaid[Math.floor(Math.random() * unpaid.length)];
+        markDay(rand.day);
+        setModalVisible(false);
+        alert(`Случайный день: ${rand.day} (${rand.value} ₽)`);
+      };
+
+      const toggleSort = () => {
+        if (sortType === 'default') setSortType('byAmount');
+        else if (sortType === 'byAmount') setSortType('onlyUnpaid');
+        else setSortType('default');
+      };
+
+      const getSortLabel = () => {
+        if (sortType === 'default') return '📅 По дням';
+        if (sortType === 'byAmount') return '💰 По сумме';
+        return '🔓 Только не закрытые';
+      };
+
+      let displayedDays = [...days];
+      if (sortType === 'onlyUnpaid') displayedDays = displayedDays.filter(d => !d.isPaid);
+      else if (sortType === 'byAmount') displayedDays.sort((a,b) => a.value - b.value);
+      else displayedDays.sort((a,b) => a.day - b.day);
+
+      const jarFillHeight = `${(percent / 100) * 100}%`;
+
+      if (loading) return <div className="loading">Загрузка...</div>;
+
+      return (
+        <div className="app-container">
+          {/* Банка */}
+          <div className="jar-wrapper">
+            <div className="jar">
+              <div className="jar-fill" style={{ height: jarFillHeight }}></div>
+              <div className="jar-coin-overlay"></div>
+              <div className="jar-lid"></div>
+              <img src={SPONGEBOB_URL} className="spongebob-img" alt="Спанч Боб" />
+              <div className="percent-badge"><span>{Math.floor(percent)}%</span></div>
+            </div>
+            <div className="jar-label">🧽 Копилочка Спанч Боба</div>
+          </div>
+
+          {/* Статистика */}
+          <div className="stats-card">
+            <div className="total">Накоплено: {total} ₽</div>
+            <div className="target">Цель: {TOTAL_POSSIBLE} ₽</div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${percent}%` }}></div>
+            </div>
+          </div>
+
+          {/* Кнопки */}
+          <div className="row-buttons">
+            <button className="btn-sort" onClick={toggleSort}>{getSortLabel()}</button>
+            <button className="btn-add" onClick={() => setModalVisible(true)}>+ Добавить</button>
+          </div>
+
+          {/* Сетка дней */}
+          <div className="days-grid">
+            {displayedDays.map(day => (
+              <div
+                key={day.id}
+                className={`day-card ${day.isPaid ? 'paid' : ''}`}
+                onClick={() => handlePress(day)}
+              >
+                {day.value}
+                {day.isPaid && <div className="check">✓</div>}
+              </div>
+            ))}
+          </div>
+
+          {/* Модальное окно */}
+          {modalVisible && (
+            <div className="modal-mask" onClick={() => setModalVisible(false)}>
+              <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+                <h3 style={{ margin: '0 0 16px' }}>Добавить взнос</h3>
+                <input
+                  type="number"
+                  placeholder="День (1-365)"
+                  value={inputDay}
+                  onChange={e => setInputDay(e.target.value)}
+                />
+                <button className="modal-btn" onClick={handleAddByDay}>Отметить день</button>
+                <div className="or-text">или</div>
+                <input
+                  type="number"
+                  placeholder="Сумма (1-365)"
+                  value={inputAmount}
+                  onChange={e => setInputAmount(e.target.value)}
+                />
+                <button className="modal-btn" onClick={handleAddByAmount}>Найти и отметить</button>
+                <button className="modal-btn" style={{ background: '#FF9800' }} onClick={handleRandom}>🎲 Случайный день</button>
+                <button className="modal-close" onClick={() => setModalVisible(false)}>Закрыть</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+  <!-- Подключаем Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</body>
+</html>
